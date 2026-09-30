@@ -1,5 +1,5 @@
 # in google aws target group terraform resource code
-
+/* 
 resource "aws_lb_target_group" "main" {
   name     = "${var.project}-${var.environment}-${var.component}" #roboshop-dev-catalogue[dates will be added check.12sept-2026]
   port     = local.tg_port #target port, details in locals
@@ -21,10 +21,29 @@ resource "aws_lb_target_group" "main" {
     matcher             = "200-299"
   }
 
-  /* tags = {
-    Environment = "dev"
-  } */
+ 
+} */
+
+#1) Target group
+
+resource "aws_lb_target_group" "main" {
+  name     = "${var.project}-${var.environment}-${var.component}" #roboshop-dev-${var.component}
+  port     = local.tg_port
+  protocol = "HTTP"
+  vpc_id   = local.vpc_id
+  deregistration_delay = 120
+  health_check {
+    healthy_threshold = 2
+    interval = 5
+    matcher = "200-299"
+    path = local.health_check_path
+    port = local.tg_port
+    timeout = 2
+    unhealthy_threshold = 3
+  }
 }
+
+
 
 resource "aws_instance" "main" {
   ami                    = local.ami_id # refers locals for more info
@@ -244,7 +263,7 @@ resource "aws_autoscaling_policy" "main" {
   policy_type            = "TargetTrackingScaling"
 
   #default_cooldown = 120 #not supported in this version so used below.
-  estimated_instance_warmup = 120 #This is not the same as cooldown; it tells Auto Scaling how long a newly launched instance needs before its metrics are considered for scaling decisions.
+  #estimated_instance_warmup = 120 #This is not the same as cooldown; it tells Auto Scaling how long a newly launched instance needs before its metrics are considered for scaling decisions.
 
   target_tracking_configuration {
     predefined_metric_specification {
